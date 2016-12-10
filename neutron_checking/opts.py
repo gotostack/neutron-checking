@@ -24,11 +24,7 @@ def list_agent_opts():
     return [
         ('agent',
          itertools.chain(
-             neutron_checking.conf.agent_config.ROOT_HELPER_OPTS,
-             neutron_checking.conf.agent_config.AGENT_STATE_OPTS,
-             neutron_checking.conf.agent_config.IPTABLES_OPTS,
-             neutron_checking.conf.agent_config.PROCESS_MONITOR_OPTS,
-             neutron_checking.conf.agent_config.AVAILABILITY_ZONE_OPTS)
+             neutron_checking.conf.agent_config.ROOT_HELPER_OPTS)
          ),
         ('DEFAULT',
          itertools.chain(
@@ -41,6 +37,7 @@ def list_opts():
     return [
         ('DEFAULT',
          itertools.chain(
+             neutron_checking.conf.common.core_cli_opts,
              neutron_checking.conf.common.core_opts,
              neutron_checking.conf.common.socket_opts,
              neutron_checking.conf.common.service_opts)

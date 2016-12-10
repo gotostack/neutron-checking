@@ -31,7 +31,7 @@ from neutron_checking.utils import utils
 
 LOG = logging.getLogger(__name__)
 
-CORE_PLUGINS_NAMESPACE = 'neutron.core_plugins'
+CORE_PLUGINS_NAMESPACE = 'neutron_checking.core_plugins'
 
 
 class ManagerMeta(profiler.TracedMeta, type(periodic_task.PeriodicTasks)):

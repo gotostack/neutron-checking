@@ -17,7 +17,6 @@ import inspect
 import os
 import random
 
-from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -143,51 +142,12 @@ class RpcReportsWorker(RpcWorker):
 
 
 def _get_rpc_workers():
-    plugin = directory.get_plugin()
-    service_plugins = directory.get_plugins().values()
-
-    if cfg.CONF.rpc_workers < 1:
-        cfg.CONF.set_override('rpc_workers', 1)
-
-    # If 0 < rpc_workers then start_rpc_listeners would be called in a
-    # subprocess and we cannot simply catch the NotImplementedError.  It is
-    # simpler to check this up front by testing whether the plugin supports
-    # multiple RPC workers.
-    if not plugin.rpc_workers_supported():
-        LOG.debug("Active plugin doesn't implement start_rpc_listeners")
-        if 0 < cfg.CONF.rpc_workers:
-            LOG.error(_LE("'rpc_workers = %d' ignored because "
-                          "start_rpc_listeners is not implemented."),
-                      cfg.CONF.rpc_workers)
-        raise NotImplementedError()
-
+    service_plugins = []
     # passing service plugins only, because core plugin is among them
     rpc_workers = [RpcWorker(service_plugins,
                              worker_process_count=cfg.CONF.rpc_workers)]
 
-    if (cfg.CONF.rpc_state_report_workers > 0 and
-            plugin.rpc_state_report_workers_supported()):
-        rpc_workers.append(
-            RpcReportsWorker(
-                [plugin],
-                worker_process_count=cfg.CONF.rpc_state_report_workers
-            )
-        )
     return rpc_workers
-
-
-def _get_plugins_workers():
-    # NOTE(twilson) get_plugins also returns the core plugin
-    plugins = directory.get_unique_plugins()
-
-    # TODO(twilson) Instead of defaulting here, come up with a good way to
-    # share a common get_workers default between NeutronPluginBaseV2 and
-    # ServicePluginBase
-    return [
-        plugin_worker
-        for plugin in plugins if hasattr(plugin, 'get_workers')
-        for plugin_worker in plugin.get_workers()
-    ]
 
 
 class AllServicesNeutronWorker(neutron_worker.NeutronWorker):
@@ -254,7 +214,7 @@ def _start_workers(workers):
 
 
 def start_all_workers():
-    workers = _get_rpc_workers() + _get_plugins_workers()
+    workers = _get_rpc_workers()
     return _start_workers(workers)
 
 
@@ -263,11 +223,6 @@ def start_rpc_workers():
 
     LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
     return _start_workers(rpc_workers)
-
-
-def start_plugins_workers():
-    plugins_workers = _get_plugins_workers()
-    return _start_workers(plugins_workers)
 
 
 def _get_api_workers():
@@ -286,10 +241,11 @@ def _run_wsgi(app_name):
 
 
 def run_wsgi_app(app):
-    server = wsgi.Server("Neutron")
+    server = wsgi.Server("neutron-checking")
     server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
                  workers=_get_api_workers())
-    LOG.info(_LI("Neutron service started, listening on %(host)s:%(port)s"),
+    LOG.info(_LI("neutron-checking service started, "
+                 "listening on %(host)s:%(port)s"),
              {'host': cfg.CONF.bind_host, 'port': cfg.CONF.bind_port})
     return server
 

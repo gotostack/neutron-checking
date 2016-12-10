@@ -147,3 +147,92 @@ PRIVATE_CIDR_RANGE = '169.254.0.0/16'
 DVR_FIP_LL_CIDR = '169.254.64.0/18'
 L3_HA_NET_CIDR = '169.254.192.0/18'
 METADATA_CIDR = '169.254.169.254/32'
+
+CORE = "CORE"
+DUMMY = "DUMMY"
+LOADBALANCER = "LOADBALANCER"
+LOADBALANCERV2 = "LOADBALANCERV2"
+FIREWALL = "FIREWALL"
+VPN = "VPN"
+METERING = "METERING"
+L3_ROUTER_NAT = "L3_ROUTER_NAT"
+FLAVORS = "FLAVORS"
+QOS = "QOS"
+
+# Maps extension alias to service type that
+# can be implemented by the core plugin.
+EXT_TO_SERVICE_MAPPING = {
+    'dummy': DUMMY,
+    'lbaas': LOADBALANCER,
+    'lbaasv2': LOADBALANCERV2,
+    'fwaas': FIREWALL,
+    'vpnaas': VPN,
+    'metering': METERING,
+    'router': L3_ROUTER_NAT,
+    'qos': QOS,
+}
+
+# Maps default service plugins entry points to their extension aliases
+DEFAULT_SERVICE_PLUGINS = {
+    'auto_allocate': 'auto-allocated-topology',
+    'tag': 'tag',
+    'timestamp': 'timestamp',
+    'network_ip_availability': 'network-ip-availability',
+    'flavors': 'flavors',
+    'revisions': 'revisions',
+}
+
+# Service operation status constants
+ACTIVE = "ACTIVE"
+DOWN = "DOWN"
+CREATED = "CREATED"
+PENDING_CREATE = "PENDING_CREATE"
+PENDING_UPDATE = "PENDING_UPDATE"
+PENDING_DELETE = "PENDING_DELETE"
+INACTIVE = "INACTIVE"
+ERROR = "ERROR"
+
+ACTIVE_PENDING_STATUSES = (
+    ACTIVE,
+    PENDING_CREATE,
+    PENDING_UPDATE
+)
+
+# Network Type constants
+TYPE_FLAT = 'flat'
+TYPE_GENEVE = 'geneve'
+TYPE_GRE = 'gre'
+TYPE_LOCAL = 'local'
+TYPE_VXLAN = 'vxlan'
+TYPE_VLAN = 'vlan'
+TYPE_NONE = 'none'
+
+# Values for network_type
+
+# For VLAN Network
+MIN_VLAN_TAG = 1
+MAX_VLAN_TAG = 4094
+
+# For Geneve Tunnel
+MIN_GENEVE_VNI = 1
+MAX_GENEVE_VNI = 2 ** 24 - 1
+
+# For GRE Tunnel
+MIN_GRE_ID = 1
+MAX_GRE_ID = 2 ** 32 - 1
+
+# For VXLAN Tunnel
+MIN_VXLAN_VNI = 1
+MAX_VXLAN_VNI = 2 ** 24 - 1
+VXLAN_UDP_PORT = 4789
+
+# Overlay (tunnel) protocol overhead
+GENEVE_ENCAP_MIN_OVERHEAD = 30
+GRE_ENCAP_OVERHEAD = 22
+VXLAN_ENCAP_OVERHEAD = 30
+
+# IP header length
+IP_HEADER_LENGTH = {
+    4: 20,
+    6: 40,
+}

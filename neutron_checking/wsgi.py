@@ -38,6 +38,7 @@ import webob.dec
 import webob.exc
 
 from neutron_checking._i18n import _, _LE, _LI
+from neutron_checking.common import config
 from neutron_checking.common import exceptions as n_exc
 from neutron_checking.conf import common
 from neutron_checking import context
@@ -91,6 +92,10 @@ class WorkerService(neutron_worker.NeutronWorker):
         if isinstance(self._server, eventlet.greenthread.GreenThread):
             self._server.kill()
             self._server = None
+
+    @staticmethod
+    def reset():
+        config.reset_service()
 
 
 class Server(object):

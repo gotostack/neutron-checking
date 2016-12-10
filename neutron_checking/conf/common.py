@@ -55,8 +55,17 @@ core_opts = [
 ]
 
 
+core_cli_opts = [
+    cfg.StrOpt('state_path',
+               default='/var/lib/neutron',
+               help=_("Where to store Neutron state files. "
+                      "This directory must be writable by the agent.")),
+]
+
+
 def register_core_common_config_opts(cfg=cfg.CONF):
     cfg.register_opts(core_opts)
+    cfg.register_cli_opts(core_cli_opts)
     wsgi.register_opts(cfg)
 
 
