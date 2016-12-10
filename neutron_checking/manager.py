@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from collections import defaultdict
 from neutron_lib import constants as lib_const
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -137,11 +136,6 @@ class NeutronManager(object):
 
         # load services from the core plugin first
         self._load_services_from_core_plugin(plugin)
-        self._load_service_plugins()
-        # Used by pecan WSGI
-        self.resource_plugin_mappings = {}
-        self.resource_controller_mappings = {}
-        self.path_prefix_resource_mappings = defaultdict(list)
 
     @staticmethod
     def load_class_for_provider(namespace, plugin_provider):
@@ -179,47 +173,6 @@ class NeutronManager(object):
         """Get default service plugins to be loaded."""
         return constants.DEFAULT_SERVICE_PLUGINS.keys()
 
-    def _load_service_plugins(self):
-        """Loads service plugins.
-
-        Starts from the core plugin and checks if it supports
-        advanced services then loads classes provided in configuration.
-        """
-        plugin_providers = cfg.CONF.service_plugins
-        plugin_providers.extend(self._get_default_service_plugins())
-        LOG.debug("Loading service plugins: %s", plugin_providers)
-        for provider in plugin_providers:
-            if provider == '':
-                continue
-
-            LOG.info(_LI("Loading Plugin: %s"), provider)
-            plugin_inst = self._get_plugin_instance('neutron.service_plugins',
-                                                    provider)
-
-            # only one implementation of svc_type allowed
-            # specifying more than one plugin
-            # for the same type is a fatal exception
-            # TODO(armax): simplify this by moving the conditional into the
-            # directory itself.
-            plugin_type = plugin_inst.get_plugin_type()
-            if directory.get_plugin(plugin_type):
-                raise ValueError(_("Multiple plugins for service "
-                                   "%s were configured") % plugin_type)
-
-            directory.add_plugin(plugin_type, plugin_inst)
-
-            # search for possible agent notifiers declared in service plugin
-            # (needed by agent management extension)
-            plugin = directory.get_plugin()
-            if (hasattr(plugin, 'agent_notifiers') and
-                    hasattr(plugin_inst, 'agent_notifiers')):
-                plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
-
-            LOG.debug("Successfully loaded %(type)s plugin. "
-                      "Description: %(desc)s",
-                      {"type": plugin_type,
-                       "desc": plugin_inst.get_plugin_description()})
-
     @classmethod
     @utils.synchronized("manager")
     def _create_instance(cls):
@@ -240,48 +193,6 @@ class NeutronManager(object):
         if not cls.has_instance():
             cls._create_instance()
         return cls._instance
-
-    @classmethod
-    def set_plugin_for_resource(cls, resource, plugin):
-        cls.get_instance().resource_plugin_mappings[resource] = plugin
-
-    @classmethod
-    def get_plugin_for_resource(cls, resource):
-        return cls.get_instance().resource_plugin_mappings.get(resource)
-
-    @classmethod
-    def set_controller_for_resource(cls, resource, controller):
-        cls.get_instance().resource_controller_mappings[resource] = controller
-
-    @classmethod
-    def get_controller_for_resource(cls, resource):
-        resource = resource.replace('_', '-')
-        res_ctrl_mappings = cls.get_instance().resource_controller_mappings
-        # If no controller is found for resource, try replacing dashes with
-        # underscores
-        return res_ctrl_mappings.get(
-            resource,
-            res_ctrl_mappings.get(resource.replace('-', '_')))
-
-    # TODO(blogan): This isn't used by anything else other than tests and
-    # probably should be removed
-    @classmethod
-    def get_service_plugin_by_path_prefix(cls, path_prefix):
-        service_plugins = directory.get_unique_plugins()
-        for service_plugin in service_plugins:
-            plugin_path_prefix = getattr(service_plugin, 'path_prefix', None)
-            if plugin_path_prefix and plugin_path_prefix == path_prefix:
-                return service_plugin
-
-    @classmethod
-    def add_resource_for_path_prefix(cls, resource, path_prefix):
-        resources = cls.get_instance().path_prefix_resource_mappings[
-            path_prefix].append(resource)
-        return resources
-
-    @classmethod
-    def get_resources_for_path_prefix(cls, path_prefix):
-        return cls.get_instance().path_prefix_resource_mappings[path_prefix]
 
 
 def init():

@@ -17,6 +17,7 @@ import inspect
 import os
 import random
 
+from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -32,6 +33,7 @@ from neutron_checking.common import rpc as n_rpc
 from neutron_checking.conf import common
 from neutron_checking import context
 from neutron_checking.db import api as session
+from neutron_checking import manager
 from neutron_checking import worker as neutron_worker
 from neutron_checking import wsgi
 from neutron_checking._i18n import _LE, _LI
@@ -142,12 +144,31 @@ class RpcReportsWorker(RpcWorker):
 
 
 def _get_rpc_workers():
-    service_plugins = []
-    # passing service plugins only, because core plugin is among them
-    rpc_workers = [RpcWorker(service_plugins,
+    plugin = manager.NeutronManager.load_class_for_provider(
+        manager.CORE_PLUGINS_NAMESPACE, cfg.CONF.core_plugin)()
+    LOG.info("=========================plugin: %s" % plugin)
+
+    if cfg.CONF.rpc_workers < 1:
+        cfg.CONF.set_override('rpc_workers', 1)
+
+    rpc_workers = [RpcWorker([plugin],
                              worker_process_count=cfg.CONF.rpc_workers)]
 
     return rpc_workers
+
+
+def _get_plugins_workers():
+    # NOTE(twilson) get_plugins also returns the core plugin
+    plugins = directory.get_unique_plugins()
+
+    # TODO(twilson) Instead of defaulting here, come up with a good way to
+    # share a common get_workers default between NeutronPluginBaseV2 and
+    # ServicePluginBase
+    return [
+        plugin_worker
+        for plugin in plugins if hasattr(plugin, 'get_workers')
+        for plugin_worker in plugin.get_workers()
+    ]
 
 
 class AllServicesNeutronWorker(neutron_worker.NeutronWorker):
@@ -216,13 +237,6 @@ def _start_workers(workers):
 def start_all_workers():
     workers = _get_rpc_workers()
     return _start_workers(workers)
-
-
-def start_rpc_workers():
-    rpc_workers = _get_rpc_workers()
-
-    LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
-    return _start_workers(rpc_workers)
 
 
 def _get_api_workers():

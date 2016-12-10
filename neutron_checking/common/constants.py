@@ -173,14 +173,7 @@ EXT_TO_SERVICE_MAPPING = {
 }
 
 # Maps default service plugins entry points to their extension aliases
-DEFAULT_SERVICE_PLUGINS = {
-    'auto_allocate': 'auto-allocated-topology',
-    'tag': 'tag',
-    'timestamp': 'timestamp',
-    'network_ip_availability': 'network-ip-availability',
-    'flavors': 'flavors',
-    'revisions': 'revisions',
-}
+DEFAULT_SERVICE_PLUGINS = {}
 
 # Service operation status constants
 ACTIVE = "ACTIVE"

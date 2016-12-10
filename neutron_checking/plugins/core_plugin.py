@@ -10,23 +10,40 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
+from neutron_checking.api.rpc.callbacks import core_callback
+from neutron_checking.common import constants
 from neutron_checking.common import rpc as n_rpc
 from neutron_checking.plugins import plugin_base
 
 LOG = logging.getLogger(__name__)
 
 
-class CorePlugin(plugin_base.ServicePluginBase,):
+class CorePlugin(plugin_base.ServicePluginBase):
 
     def __init__(self):
         super(CorePlugin, self).__init__()
         self._setup_rpc()
 
     def _setup_rpc(self):
-        self.topic = "ttt"
+        """Initialize components to support agent communication."""
+        self.endpoints = [core_callback.CoreRpcCallback()]
+
+    def get_plugin_type(self):
+        """Return one of predefined service types."""
+        return constants.CORE
+
+    def get_plugin_description(self):
+        """Return string description of the plugin."""
+        return "Core plugin"
+
+    @log_helpers.log_method_call
+    def start_rpc_listeners(self):
+        """Start the RPC loop to let the plugin communicate with agents."""
+        self._setup_rpc()
+        self.topic = constants.CORE
         self.conn = n_rpc.create_connection()
-        self.conn.create_consumer(self.topic, self.endpoints,
-                                  fanout=False)
-        self.conn.consume_in_threads()
+        self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
+        return self.conn.consume_in_threads()
