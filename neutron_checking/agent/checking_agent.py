@@ -16,11 +16,11 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import periodic_task
 
+from neutron_checking.api.rpc.callbacks import core_check_callback_api
+from neutron_checking.common import rpc as n_rpc
 from neutron_checking import context
 from neutron_checking import manager
 from neutron_checking.resources import resources
-from neutron_checking.common import rpc as n_rpc
-from neutron_checking.api.rpc.callbacks import core_check_callback_api
 
 from neutron_checking._i18n import _LI
 

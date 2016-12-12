@@ -32,7 +32,7 @@ class Versions(object):
         """Respond to a request for all Neutron API versions."""
         version_objs = [
             {
-                "id": "v2.0",
+                "id": "v1",
                 "status": "CURRENT",
             },
         ]

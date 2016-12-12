@@ -60,6 +60,18 @@ class ServicePluginBase(PluginInterface,
         """Return string description of the plugin."""
         pass
 
+    def start_rpc_listeners(self):
+        """Start the RPC listeners.
+
+        Most plugins start RPC listeners implicitly on initialization.  In
+        order to support multiple process RPC, the plugin needs to expose
+        control over when this is started.
+
+        .. note:: this method is optional, as it was not part of the originally
+                  defined plugin API.
+        """
+        raise NotImplementedError()
+
     def rpc_workers_supported(self):
         """Return whether the plugin supports multiple RPC workers.
 

@@ -33,7 +33,6 @@ from neutron_checking.common import rpc as n_rpc
 from neutron_checking.conf import common
 from neutron_checking import context
 from neutron_checking.db import api as session
-from neutron_checking import manager
 from neutron_checking import worker as neutron_worker
 from neutron_checking import wsgi
 from neutron_checking._i18n import _LE, _LI
@@ -140,14 +139,26 @@ class RpcWorker(neutron_worker.NeutronWorker):
 
 
 def _get_rpc_workers():
-    plugin = manager.NeutronManager.load_class_for_provider(
-        manager.CORE_PLUGINS_NAMESPACE, cfg.CONF.core_plugin)()
-    LOG.info("=========================plugin: %s" % plugin)
+    plugin = directory.get_plugin()
+    service_plugins = directory.get_plugins().values()
 
     if cfg.CONF.rpc_workers < 1:
         cfg.CONF.set_override('rpc_workers', 1)
 
-    rpc_workers = [RpcWorker([plugin],
+    # If 0 < rpc_workers then start_rpc_listeners would be called in a
+    # subprocess and we cannot simply catch the NotImplementedError.  It is
+    # simpler to check this up front by testing whether the plugin supports
+    # multiple RPC workers.
+    if not plugin.rpc_workers_supported():
+        LOG.debug("Active plugin doesn't implement start_rpc_listeners")
+        if 0 < cfg.CONF.rpc_workers:
+            LOG.error(_LE("'rpc_workers = %d' ignored because "
+                          "start_rpc_listeners is not implemented."),
+                      cfg.CONF.rpc_workers)
+        raise NotImplementedError()
+
+    # passing service plugins only, because core plugin is among them
+    rpc_workers = [RpcWorker(service_plugins,
                              worker_process_count=cfg.CONF.rpc_workers)]
 
     return rpc_workers
