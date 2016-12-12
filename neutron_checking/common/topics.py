@@ -21,6 +21,8 @@ L2POPULATION = 'l2population'
 DVR = 'dvr'
 RESOURCES = 'resources'
 
+CHECK = 'check'
+
 CREATE = 'create'
 DELETE = 'delete'
 UPDATE = 'update'

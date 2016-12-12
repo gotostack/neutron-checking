@@ -16,15 +16,13 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import periodic_task
 
-from neutron_checking.common import agent_rpc
 from neutron_checking import context
 from neutron_checking import manager
 from neutron_checking.resources import resources
+from neutron_checking.common import rpc as n_rpc
+from neutron_checking.api.rpc.callbacks import core_check_callback_api
 
 from neutron_checking._i18n import _LI
-
-CHECK = 'check'
-
 
 LOG = logging.getLogger(__name__)
 
@@ -39,24 +37,17 @@ class CheckingAgent(manager.Manager):
         self.agent_conf = self.conf.AGENT
         # self.ovs_conf = self.conf.OVS
         #self.l2_pop = self.agent_conf.l2_population
+        self.context = context.get_admin_context_without_session()
 
         self.setup_rpc()
 
     def setup_rpc(self):
-        # RPC network init
-        self.context = context.get_admin_context_without_session()
-        # Define the listening consumers for the agent
-        consumers = [[resources.PORT, CHECK],
-                     [resources.TUNNEL, CHECK],
-                     [resources.ROUTER, CHECK],
-                     [resources.NETWORK, CHECK],
-                     [resources.FLOATING_IP, CHECK]]
-        #if self.l2_pop:
-        #    consumers.append([topics.L2POPULATION, CHECK])
-        self.connection = agent_rpc.create_consumers([self],
-                                                     resources.AGENT,
-                                                     consumers,
-                                                     start_listening=False)
+        self.topic = resources.AGENT
+        self.conn = n_rpc.create_connection()
+        self.endpoints = [core_check_callback_api.CoreCheckCallbackAPI()]
+        self.conn.create_consumer(self.topic, self.endpoints,
+                                  fanout=False)
+        self.conn.consume_in_threads()
 
     def after_start(self):
         self.run()

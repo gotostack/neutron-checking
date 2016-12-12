@@ -13,7 +13,7 @@
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
-from neutron_checking.api.rpc.callbacks import core_callback
+from neutron_checking.api.rpc.callbacks import core_check_pull_api
 from neutron_checking.common import constants
 from neutron_checking.common import rpc as n_rpc
 from neutron_checking.plugins import plugin_base
@@ -29,7 +29,7 @@ class CorePlugin(plugin_base.ServicePluginBase):
 
     def _setup_rpc(self):
         """Initialize components to support agent communication."""
-        self.endpoints = [core_callback.CoreRpcCallback()]
+        self.endpoints = [core_check_pull_api.CoreCheckPullAPI()]
 
     def get_plugin_type(self):
         """Return one of predefined service types."""

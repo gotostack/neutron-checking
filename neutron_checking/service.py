@@ -139,10 +139,6 @@ class RpcWorker(neutron_worker.NeutronWorker):
         config.reset_service()
 
 
-class RpcReportsWorker(RpcWorker):
-    start_listeners_method = 'start_rpc_state_reports_listener'
-
-
 def _get_rpc_workers():
     plugin = manager.NeutronManager.load_class_for_provider(
         manager.CORE_PLUGINS_NAMESPACE, cfg.CONF.core_plugin)()
