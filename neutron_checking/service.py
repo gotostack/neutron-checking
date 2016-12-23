@@ -141,6 +141,7 @@ class RpcWorker(neutron_worker.NeutronWorker):
 def _get_rpc_workers():
     plugin = directory.get_plugin()
     service_plugins = directory.get_plugins().values()
+    LOG.info("====================_get_rpc_workers: %s" % service_plugins)
 
     if cfg.CONF.rpc_workers < 1:
         cfg.CONF.set_override('rpc_workers', 1)

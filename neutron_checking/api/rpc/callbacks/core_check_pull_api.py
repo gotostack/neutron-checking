@@ -16,6 +16,7 @@
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron_checking.common import constants as n_const
 from neutron_checking.common import rpc as n_rpc
 from neutron_checking.common import topics
 
@@ -23,26 +24,30 @@ from neutron_checking.common import topics
 LOG = logging.getLogger(__name__)
 
 
-class CoreCheckPullAPI(object):
+class CoreCheckingPullAPI(object):
     """Server side of Core Resource Check RPC API.
 
     API version history:
         1.0 - Initial version.
     """
-    def __init__(self, topic=topics.AGENT):
+    def __init__(self, topic=topics.PLUGIN):
         self.topic = topic
-        self.topic_res_check = topics.get_topic_name(topic,
-                                                     topics.RESOURCES,
-                                                     topics.CHECK)
-        target = oslo_messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(
+                topic=topic,
+                namespace=n_const.RPC_NAMESPACE_CHECKING_PLUGIN,
+                version='1.0')
         self.client = n_rpc.get_client(target)
 
     def check_router_status(self, context, router_id, host):
-        cctxt = self.client.prepare(topic=self.topic_res_check, server=host)
+        cctxt = self.client.prepare(topic=self.topic,
+                                    version='1.0',
+                                    server=host)
         return cctxt.call(context, 'check_router_status', router_id=router_id)
 
     def check_floating_ip_status(self, context, router_id, ip_address, host):
-        cctxt = self.client.prepare(topic=self.topic_res_check, server=host)
+        cctxt = self.client.prepare(topic=self.topic,
+                                    version='1.0',
+                                    server=host)
         return cctxt.call(context, 'check_floating_ip_status',
                           router_id=router_id,
                           ip_address=ip_address)

@@ -13,22 +13,22 @@
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron_checking.common import constants
+from neutron_checking.common import constants as n_const
 from neutron_checking.common import topics
 
 LOG = logging.getLogger(__name__)
 
 
-class CoreCheckingCallbackAPI(object):
+class CheckingAgentCallbackAPI(object):
     target = oslo_messaging.Target(
-        topic=topics.PLUGIN,
-        version='1.0',
-        namespace=constants.RPC_NAMESPACE_CHECKING_PLUGIN)
+        topic=topics.AGENT,
+        namespace=n_const.RPC_NAMESPACE_CHECKING_AGETN,
+        version='1.0')
 
-    def check_router_status(self, context, **kwargs):
-        LOG.info("=====================check_router_status called")
-        return {"123": "OK"}
-
-    def check_floating_ip_status(self, context, **kwargs):
-        LOG.info("=====================check_floating_ip_status called")
-        return {"456": "OK"}
+    def get_router_info(self, context, **kwargs):
+        """Returns a router info."""
+        host = kwargs.get('host')
+        router_id = kwargs.get('router_id')
+        LOG.info("=========================call from host: %s" % host)
+        LOG.info("=========================called router_id: %s" % router_id)
+        return {"router_id": "I am a router id."}

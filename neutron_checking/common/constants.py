@@ -100,6 +100,10 @@ RPC_NAMESPACE_DVR = None
 RPC_NAMESPACE_STATE = None
 # RPC interface for agent to plugin resources API
 RPC_NAMESPACE_RESOURCES = None
+# RPC interface for agent to plugin checking resources API
+RPC_NAMESPACE_CHECKING_PLUGIN = None
+# RPC interface for plugin to checking agent API
+RPC_NAMESPACE_CHECKING_AGETN = None
 
 # Default network MTU value when not configured
 DEFAULT_NETWORK_MTU = 1500

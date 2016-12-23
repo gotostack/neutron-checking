@@ -16,8 +16,10 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import periodic_task
 
+from neutron_checking.api.rpc.callbacks import checking_agent_rpc_api
 from neutron_checking.api.rpc.callbacks import core_check_callback_api
 from neutron_checking.common import rpc as n_rpc
+from neutron_checking.common import topics
 from neutron_checking import context
 from neutron_checking import manager
 from neutron_checking.resources import resources
@@ -38,13 +40,17 @@ class CheckingAgent(manager.Manager):
         # self.ovs_conf = self.conf.OVS
         #self.l2_pop = self.agent_conf.l2_population
         self.context = context.get_admin_context_without_session()
+        self.plugin_api = checking_agent_rpc_api.CheckingAgentPluginApi(
+            topics.AGENT,
+            # change to controller host
+            self.conf.host)
 
         self.setup_rpc()
 
     def setup_rpc(self):
         self.topic = resources.AGENT
         self.conn = n_rpc.create_connection()
-        self.endpoints = [core_check_callback_api.CoreCheckCallbackAPI()]
+        self.endpoints = [core_check_callback_api.CoreCheckingCallbackAPI()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         self.conn.consume_in_threads()
@@ -59,3 +65,5 @@ class CheckingAgent(manager.Manager):
     @periodic_task.periodic_task(spacing=1)
     def periodic_resync(self, context):
         LOG.info(_LI("periodic_resync Hello world"))
+        router_info = self.plugin_api.get_router_info("test")
+        LOG.info("===================router_info: %s" % router_info)

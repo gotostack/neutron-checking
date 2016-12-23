@@ -13,9 +13,11 @@
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
+from neutron_checking.api.rpc.callbacks import checking_agent_callback_api
 from neutron_checking.api.rpc.callbacks import core_check_pull_api
 from neutron_checking.common import constants
 from neutron_checking.common import rpc as n_rpc
+from neutron_checking.common import topics
 from neutron_checking.plugins import plugin_base
 
 LOG = logging.getLogger(__name__)
@@ -25,11 +27,12 @@ class CorePlugin(plugin_base.ServicePluginBase):
 
     def __init__(self):
         super(CorePlugin, self).__init__()
-        self._setup_rpc()
+        self.check_rpc_api = core_check_pull_api.CoreCheckingPullAPI()
 
     def _setup_rpc(self):
         """Initialize components to support agent communication."""
-        self.endpoints = [core_check_pull_api.CoreCheckPullAPI()]
+        self.endpoints = [
+            checking_agent_callback_api.CheckingAgentCallbackAPI()]
 
     def get_plugin_type(self):
         """Return one of predefined service types."""
@@ -43,7 +46,10 @@ class CorePlugin(plugin_base.ServicePluginBase):
     def start_rpc_listeners(self):
         """Start the RPC loop to let the plugin communicate with agents."""
         self._setup_rpc()
-        self.topic = constants.CORE
+        LOG.info("=================start_rpc_listeners")
+        self.topic = topics.PLUGIN
+        LOG.info("===========start_rpc_listeners self.topic: %s" % self.topic)
         self.conn = n_rpc.create_connection()
+        LOG.info("===========start_rpc_listeners self.conn: %s" % self.conn)
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
         return self.conn.consume_in_threads()
